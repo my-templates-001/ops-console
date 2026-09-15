@@ -10,33 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DevicesRouteImport } from './routes/devices'
+import { Route as ShowcaseRouteImport } from './routes/showcase'
+import { Route as MonitoringTargetIdRouteImport } from './routes/monitoring.$targetId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevicesRoute = DevicesRouteImport.update({
+  id: '/devices',
+  path: '/devices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShowcaseRoute = ShowcaseRouteImport.update({
+  id: '/showcase',
+  path: '/showcase',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonitoringTargetIdRoute = MonitoringTargetIdRouteImport.update({
+  id: '/monitoring/$targetId',
+  path: '/monitoring/$targetId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/devices': typeof DevicesRoute
+  '/showcase': typeof ShowcaseRoute
+  '/monitoring/$targetId': typeof MonitoringTargetIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/devices': typeof DevicesRoute
+  '/showcase': typeof ShowcaseRoute
+  '/monitoring/$targetId': typeof MonitoringTargetIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/devices': typeof DevicesRoute
+  '/showcase': typeof ShowcaseRoute
+  '/monitoring/$targetId': typeof MonitoringTargetIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/devices' | '/showcase' | '/monitoring/$targetId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/devices' | '/showcase' | '/monitoring/$targetId'
+  id: '__root__' | '/' | '/devices' | '/showcase' | '/monitoring/$targetId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DevicesRoute: typeof DevicesRoute
+  ShowcaseRoute: typeof ShowcaseRoute
+  MonitoringTargetIdRoute: typeof MonitoringTargetIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +78,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/devices': {
+      id: '/devices'
+      path: '/devices'
+      fullPath: '/devices'
+      preLoaderRoute: typeof DevicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/showcase': {
+      id: '/showcase'
+      path: '/showcase'
+      fullPath: '/showcase'
+      preLoaderRoute: typeof ShowcaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monitoring/$targetId': {
+      id: '/monitoring/$targetId'
+      path: '/monitoring/$targetId'
+      fullPath: '/monitoring/$targetId'
+      preLoaderRoute: typeof MonitoringTargetIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DevicesRoute: DevicesRoute,
+  ShowcaseRoute: ShowcaseRoute,
+  MonitoringTargetIdRoute: MonitoringTargetIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,24 +1,24 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Filter, Play, Plus, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { AppShell } from "@/components/app-shell";
+import { ActionMenu, ExecutionBadge, ExecutionSelector, PageHeader, StatusBadge, type Execution } from "@/components/ops-ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { targets } from "@/lib/mock-data";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+ head: () => ({ meta: [{ title: "Monitoring — Northstar Ops" }, { name:"description", content:"Monitor targets, health, execution sources, and upcoming checks." }, { property:"og:title", content:"Monitoring — Northstar Ops" }, { property:"og:description", content:"Monitor targets, health, execution sources, and upcoming checks." }, { property:"og:type", content:"website" }, { name:"twitter:card", content:"summary_large_image" }] }), component: MonitoringPage,
 });
-
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
+function MonitoringPage(){
+ const [query,setQuery]=useState(""); const [execution,setExecution]=useState<Execution|"All">("All"); const [issues,setIssues]=useState(false); const [message,setMessage]=useState("");
+ const filtered=useMemo(()=>targets.filter(t=>(!query||t.name.toLowerCase().includes(query.toLowerCase()))&&(execution==="All"||t.execution===execution)&&(!issues||["degraded","error"].includes(t.status))),[query,execution,issues]);
+ const run=(name:string)=>{setMessage(`${name} queued on its configured execution source.`); window.setTimeout(()=>setMessage(""),2600)};
+ return <AppShell><div className="space-y-4"><PageHeader eyebrow="Operations" title="Monitoring" description="Targets, schedules, and execution health in one place." actions={<Button size="sm"><Plus />New target</Button>} />
+ {message&&<div className="rounded-md border border-success/25 bg-success-soft px-3 py-2 text-sm text-success" role="status">{message}</div>}
+ <div className="flex flex-col gap-3 border-b pb-4 md:flex-row md:items-center"><div className="relative min-w-0 flex-1 md:max-w-sm"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground"/><Input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search targets" className="pl-9" /></div><ExecutionSelector value={execution} onChange={setExecution}/><Button variant={issues?"secondary":"outline"} size="sm" onClick={()=>setIssues(v=>!v)}><Filter/>Issues only</Button><span className="md:ml-auto text-xs text-muted-foreground">{filtered.length} of {targets.length} targets</span></div>
+ <div className="hidden overflow-hidden rounded-md border bg-card md:block"><table className="w-full text-left text-sm"><thead className="border-b bg-muted/60 text-xs text-muted-foreground"><tr><th className="px-4 py-2.5">Target</th><th className="px-3 py-2.5">Status</th><th className="px-3 py-2.5">Execution</th><th className="px-3 py-2.5">Source / device</th><th className="px-3 py-2.5">Last checked</th><th className="px-3 py-2.5">Next check</th><th className="px-3 py-2.5 text-right">Actions</th></tr></thead><tbody className="divide-y">{filtered.map(t=><tr key={t.id} className="hover:bg-accent/40"><td className="px-4 py-3"><Link to="/monitoring/$targetId" params={{targetId:t.id}} className="font-semibold hover:text-primary">{t.name}</Link><p className="mt-0.5 text-xs text-muted-foreground">{t.kind}{t.note&&` · ${t.note}`}</p></td><td className="px-3 py-3"><StatusBadge status={t.status}/></td><td className="px-3 py-3"><ExecutionBadge value={t.execution}/></td><td className="px-3 py-3 text-muted-foreground">{t.device}</td><td className="px-3 py-3 font-mono text-xs text-muted-foreground">{t.checked}</td><td className="px-3 py-3 font-mono text-xs text-muted-foreground">{t.next}</td><td className="px-3 py-3"><div className="flex justify-end"><Button variant="ghost" size="icon" onClick={()=>run(t.name)} aria-label={`Run ${t.name}`}><Play/></Button><ActionMenu/></div></td></tr>)}</tbody></table></div>
+ <div className="space-y-3 md:hidden">{filtered.map(t=><article key={t.id} className="rounded-md border bg-card p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><div className="min-w-0"><Link to="/monitoring/$targetId" params={{targetId:t.id}} className="block truncate font-semibold">{t.name}</Link><p className="mt-1 text-xs text-muted-foreground">{t.kind}</p></div><StatusBadge status={t.status}/></div>{t.note&&<p className="mt-3 rounded-md bg-muted px-2.5 py-2 text-xs text-muted-foreground">{t.note}</p>}<div className="mt-3 grid grid-cols-2 gap-3 text-xs"><div><p className="text-muted-foreground">Execution</p><div className="mt-1"><ExecutionBadge value={t.execution}/></div></div><div><p className="text-muted-foreground">Source</p><p className="mt-1 truncate font-medium">{t.device}</p></div><div><p className="text-muted-foreground">Last checked</p><p className="mt-1 font-mono">{t.checked}</p></div><div><p className="text-muted-foreground">Next check</p><p className="mt-1 font-mono">{t.next}</p></div></div><div className="mt-4 grid grid-cols-[1fr_1fr_auto] gap-2"><Button size="sm" onClick={()=>run(t.name)}><Play/>Run now</Button><Button asChild variant="outline" size="sm"><Link to="/monitoring/$targetId" params={{targetId:t.id}}>Details</Link></Button><ActionMenu/></div></article>)}</div>
+ {filtered.length===0&&<div className="rounded-md border border-dashed py-14 text-center"><p className="font-semibold">No matching targets</p><p className="mt-1 text-sm text-muted-foreground">Clear filters or try another search.</p></div>}
+ </div></AppShell>;
 }
